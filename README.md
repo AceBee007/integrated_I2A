@@ -31,6 +31,8 @@ an I2A agent with integrated envModel
 - 
 
 ## TODO
+- modelの可視化
+- tensorboardのparameterグリッド
 - integrated-i2aを実装
 - integrated-i2aのA2C実験
 - integrated-i2aのDQN実験
