@@ -30,3 +30,8 @@ an I2A agent with integrated envModel
     - `optimizer.zero_grad()`->`loss.backward()`->`optimizer.step()`がどういう意味かについて解説
 - 
 
+## TODO
+- integrated-i2aを実装
+- integrated-i2aのA2C実験
+- integrated-i2aのDQN実験
+- t-SNEでFCの最後の出力のウェイトを可視化
