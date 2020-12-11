@@ -1,3 +1,6 @@
+import gym
+from stable_baselines.common.vec_env import SubprocVecEnv
+from stable_baselines.common import set_global_seeds, make_vec_env
 import numpy as np
 from logging import getLogger, FileHandler, Formatter
 import datetime
@@ -84,3 +87,19 @@ def write_histograms(model, writer, step):
     model_dict = model.state_dict()
     for key in model_dict:
         writer.add_histogram(model._get_name()+':'+key, model_dict[key], step)
+
+def make_env(env_id, rank, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environments you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+    def _init():
+        env = gym.make(env_id)
+        env.seed(seed + rank)
+        return env
+    set_global_seeds(seed)
+    return _init
