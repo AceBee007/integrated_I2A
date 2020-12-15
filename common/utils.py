@@ -102,5 +102,4 @@ def make_env(env_id, rank, seed=0):
         env = gym.make(env_id)
         env.seed(seed + rank)
         return env
-    set_global_seeds(seed)
     return _init
