@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-from torch.autograd import Variable
+#from torch.autograd import Variable
 
 class OnPolicy(nn.Module):
     def __init__(self):
@@ -65,7 +65,7 @@ class ActorCritic(OnPolicy):
         return logit, value
     
     def feature_size(self):
-        return self.features(Variable(torch.zeros(1, *self.in_shape))).view(1, -1).size(1)
+        return self.features(torch.zeros(1, *self.in_shape)).view(1, -1).size(1)
     
     
 class RolloutStorage(object):
