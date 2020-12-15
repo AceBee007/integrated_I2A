@@ -390,8 +390,6 @@ class MiniPacman(gym.Env):
 
   def step(self, action):
     """Advances environment one time-step following the given action."""
-    #start = time.time()
-
     self.frame += 1
     pillman = self.world_state['pillman']
     self.pcontinue = self.discount
@@ -427,14 +425,7 @@ class MiniPacman(gym.Env):
             self._kill_ghost(i)
             # assume you can only eat one ghost per turn:
             break
-
-    #end = time.time()
-    #print("step moved ghost and pillman", end - start)
-
-    #start = time.time()
     self._make_image()
-    #end = time.time()
-    #print("step create observation", end - start)
 
     # Check if level over
     if self.timer == self.timer_terminate:
