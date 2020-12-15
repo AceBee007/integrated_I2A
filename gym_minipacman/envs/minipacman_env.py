@@ -132,6 +132,14 @@ class MiniPacman(gym.Env):
   GHOSTS_EDIBLE = 4
   PILL = 5
   NUM_ACTIONS = 5
+  # for color image
+  color_walls = [1, 1, 1]  # 0
+  color_food = [0, 0, 1]  # 1
+  color_pillman = [0, 1, 0]  # 2
+  color_ground = [0, 0, 0] #3
+  color_pill = [0, 1, 1]  # 5
+  color_ghost = [1, 0, 0]  # 4
+  color_ghost_edible = [1, 1, 0]  # 6
 
   def __init__(self):
     self.viewer = None
@@ -167,6 +175,8 @@ class MiniPacman(gym.Env):
         power=0
     )
     self.nplanes = 6
+    # the original version is self.image= (height, width, 3)
+    # self,color_image = (3, height, width)
     self.color_image = np.zeros(shape=(self.height, self.width, 3),
                                 dtype=np.float32)
     self.frame = 0
@@ -178,7 +188,9 @@ class MiniPacman(gym.Env):
 
     self.reward_bins = [self.step_reward, self.food_reward, self.big_pill_reward, self.ghost_hunt_reward, self.ghost_death_reward]
     self.action_space = Discrete(5)
-    self.observation_space = Box(low=0, high=255, shape=(self.height, self.width, 3), dtype=np.uint8)
+    #self.observation_space = Box(low=0, high=255, shape=(self.height, self.width, 3), dtype=np.uint8)
+    self.observation_space = Box(low=0, high=1, shape=(3, self.height, self.width), dtype=np.float32)
+
 
 
   def _make_pillman(self):
@@ -337,26 +349,16 @@ class MiniPacman(gym.Env):
 
   def _make_image(self):
     """Represents world in a `height x width x 6` `Tensor`."""
-
-    self.color_walls = [1, 1, 1]  # 0
-    self.color_food = [0, 0, 1]  # 1
-    self.color_pillman = [0, 1, 0]  # 2
-    self.color_ground = [0, 0, 0] #3
-    self.color_pill = [0, 1, 1]  # 5
-
-    self.color_ghost = [1, 0, 0]  # 4
-    self.color_ghost_edible = [1, 1, 0]  # 6
-
     for (x, y), value in np.ndenumerate(self.walls):
         if self.walls[x, y] == 1:
-            self.color_image[x, y] = self.color_walls
+            self.color_image[x, y] = MiniPacman.color_walls
         elif self.world_state['food'][x, y] == 1:
-            self.color_image[x, y] = self.color_food
+            self.color_image[x, y] = MiniPacman.color_food
         else:
-            self.color_image[x, y] = self.color_ground
+            self.color_image[x, y] = MiniPacman.color_ground
 
     x, y = self.world_state['pillman']['pos']
-    self.color_image[x, y] = self.color_pillman
+    self.color_image[x, y] = MiniPacman.color_pillman
 
     for ghost in self.world_state['ghosts']:
         #edibility = self.world_state['power'] / float(self.pill_duration)
@@ -365,18 +367,17 @@ class MiniPacman(gym.Env):
         x, y = ghost['pos']
         #self.color_image[x, y] = [g + ge, ge, 0]
         if self.world_state['power'] > 0:
-            self.color_image[x, y] = self.color_ghost_edible
+            self.color_image[x, y] = MiniPacman.color_ghost_edible
         else:
-            self.color_image[x, y] = self.color_ghost
+            self.color_image[x, y] = MiniPacman.color_ghost
 
     for i in range(min(self.world_state['power'], self.width)):
-        self.color_image[self.height-1, i] = self.color_ghost_edible
+        self.color_image[self.height-1, i] = MiniPacman.color_ghost_edible
 
     for pill in self.world_state['pills']:
         x, y = pill['pos']
-        self.color_image[x, y] = self.color_pill
-
-    return self.color_image
+        self.color_image[x, y] = MiniPacman.color_pill
+    return self.color_image.transpose(2,0,1)
 
   def start(self):
     """Starts a new episode."""
@@ -442,16 +443,16 @@ class MiniPacman(gym.Env):
     #Note: changed order
     #state,reward, done, info
     info = {'Agent_ID':agent_id}
-    ret = (self.color_image,
+    ret = (self.color_image.transpose(2,0,1),
            self.reward,
            not self.pcontinue, info)
     return ret
 
   def reset(self):
     self.start()
-    return self.color_image
+    return self.color_image.transpose(2,0,1)
 
-  def render(self, mode='human', close=False):
+  def render(self, mode='rgb_array', close=False):
       img,_,_,_ = self.observation()
       img *= 255
       img = img.astype('uint8')
