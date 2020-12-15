@@ -1,6 +1,7 @@
 import gym
-from stable_baselines.common.vec_env import SubprocVecEnv
-from stable_baselines.common import set_global_seeds, make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.utils import set_random_seed
 import numpy as np
 from logging import getLogger, FileHandler, Formatter
 import datetime
@@ -14,7 +15,7 @@ parser = argparse.ArgumentParser(description='model training log')
 parser.add_argument('--num_envs', type=int, default=16)
 parser.add_argument('--num_steps', type=int, default=5)# 5 for rollout times
 parser.add_argument('--num_frames', type=int, default=1000000)# 10e5 , 100万
-parser.add_argument('--num_ics', type=int, default=1)# default:1 for imagenation core
+parser.add_argument('--num_ics', type=int, default=1)# default:1 for imagination core
 parser.add_argument('--mode', type=str, default='regular')
 parser.add_argument('--learning_rate', type=float, default=7e-4)
 parser.add_argument('--free_model', type=str, default='dummy')
