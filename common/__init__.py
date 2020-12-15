@@ -1,1 +1,1 @@
-import environment_model
+from . import environment_model
