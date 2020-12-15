@@ -16,10 +16,11 @@ parser.add_argument('--num_envs', type=int, default=16)
 parser.add_argument('--num_steps', type=int, default=5)# 5 for rollout times
 parser.add_argument('--num_frames', type=int, default=1000000)# 10e5 , 100万
 parser.add_argument('--num_ics', type=int, default=1)# default:1 for imagination core
-parser.add_argument('--mode', type=str, default='regular')
+parser.add_argument('--mode', type=str, default="RegularMiniPacmanNoFrameskip-v0")
 parser.add_argument('--learning_rate', type=float, default=7e-4)
 parser.add_argument('--free_model', type=str, default='dummy')
 parser.add_argument('--env_model', type=str, default='dummy')
+parser.add_argument('--global_seed', type=int, default=123)
 
 def get_my_logger(label, args):
     logger = getLogger('training log')
