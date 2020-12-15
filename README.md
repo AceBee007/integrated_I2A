@@ -28,7 +28,9 @@ an I2A agent with integrated envModel
         - `env.action_space.sample()`のランダムシードは`env.seed(RANDOM_SEED)`に管理されてないのが問題
 - [PyTorchは誤差逆伝播とパラメータ更新をどうやって行っているのか？](https://ohke.hateblo.jp/entry/2019/12/07/230000)
     - `optimizer.zero_grad()`->`loss.backward()`->`optimizer.step()`がどういう意味かについて解説
-- 
+- [Any different between model(input) and model.forward(input)](https://discuss.pytorch.org/t/any-different-between-model-input-and-model-forward-input/3690/7)
+    - `model(input)`はモデルを実行するのに必要な物を受け取って実行している
+    - `model.forward(input)`は内部実行のhookと関連していないのでよくない(らしい)
 
 ## TODO
 - modelの可視化
