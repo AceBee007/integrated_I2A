@@ -40,7 +40,7 @@ class RolloutEncoder(nn.Module):
     
     
     def feature_size(self):
-        return self.features(autograd.Variable(torch.zeros(1, *self.in_shape))).view(1, -1).size(1)
+        return self.features(torch.zeros(1, *self.in_shape)).view(1, -1).size(1)
 
 
 # <p>For the model-free path of the I2A, it's used a standard network of convolutional layers plus one fully
@@ -86,7 +86,7 @@ class I2A(OnPolicy):
         batch_size = state.size(0)
         
         imagined_state, imagined_reward = self.imagination(state.data)
-        hidden = self.encoder(Variable(imagined_state), Variable(imagined_reward))
+        hidden = self.encoder(imagined_state, imagined_reward)
         hidden = hidden.view(batch_size, -1)
         
         state = self.features(state)
@@ -101,21 +101,21 @@ class I2A(OnPolicy):
         return logit, value
         
     def feature_size(self):
-        return self.features(autograd.Variable(torch.zeros(1, *self.in_shape))).view(1, -1).size(1)
+        return self.features(torch.zeros(1, *self.in_shape)).view(1, -1).size(1)
 
 
-# <p>The imagination core (IC) predicts the next time step conditioned on an action sampled from the rollout policy (distil_policy).<br>
+# <p>The imagination core (IC) predicts the next time step conditioned on an action sampled from the rollout policy (distill_policy).<br>
 # See Figure 1 a. in the paper
 # </p>
 
 class ImaginationCore(object):
-    def __init__(self, num_rollouts, in_shape, num_actions, num_rewards, env_model, distil_policy, full_rollout=True):
+    def __init__(self, num_rollouts, in_shape, num_actions, num_rewards, env_model, distill_policy, full_rollout=True):
         self.num_rollouts  = num_rollouts
         self.in_shape      = in_shape
         self.num_actions   = num_actions
         self.num_rewards   = num_rewards
         self.env_model     = env_model
-        self.distil_policy = distil_policy
+        self.distill_policy = distill_policy
         self.full_rollout  = full_rollout
         
     def __call__(self, state):
@@ -131,7 +131,8 @@ class ImaginationCore(object):
             action = action.view(-1)
             rollout_batch_size = batch_size * self.num_actions
         else:
-            action = self.distil_policy.act(Variable(state, volatile=True))
+            with torch.no_grad():
+                action = self.distill_policy.act(state)
             action = action.data.cpu()
             rollout_batch_size = batch_size
 
@@ -140,7 +141,8 @@ class ImaginationCore(object):
             onehot_action[range(rollout_batch_size), action] = 1
             inputs = torch.cat([state, onehot_action], 1)
 
-            imagined_state, imagined_reward = self.env_model(Variable(inputs, volatile=True))
+            with torch.no_grad():
+                imagined_state, imagined_reward = self.env_model(inputs)
 
             imagined_state  = F.softmax(imagined_state, dim=1).max(1)[1].data.cpu()
             imagined_reward = F.softmax(imagined_reward, dim=1).max(1)[1].data.cpu()
@@ -155,7 +157,8 @@ class ImaginationCore(object):
             rollout_rewards.append(onehot_reward.unsqueeze(0))
 
             state  = imagined_state
-            action = self.distil_policy.act(Variable(state, volatile=True))
+            with torch.no_grad():
+                action = self.distill_policy.act(state)
             action = action.data.cpu()
         
         return torch.cat(rollout_states), torch.cat(rollout_rewards)
