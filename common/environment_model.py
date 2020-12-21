@@ -110,6 +110,8 @@ class EnvModel(nn.Module):
             nn.LeakyReLU()
         )
         self.reward_fc    = nn.Linear(64 * width * height, num_rewards)
+        if USE_CUDA:
+            self.cuda()
         
     def forward(self, inputs):
         batch_size = inputs.size(0)
