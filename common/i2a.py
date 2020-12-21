@@ -172,7 +172,5 @@ class ImaginationCore(object):
 
 # In[12]:
 
-
-full_rollout = True
-
+rollout = True
 

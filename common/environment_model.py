@@ -52,7 +52,7 @@ class PoolAndInject(torch.nn.Module):
         self.pool = nn.MaxPool2d(kernel_size=(W,H))
 
     def forward(self,input):
-        x = F.relu(self.pool(input))   #max-pool
+        x = F.leaky_relu_(self.pool(input))   #max-pool
         x = x.repeat(1, 1, self.W, self.H)  #tile
         return x + input
 
@@ -74,16 +74,16 @@ class BasicBlock2(torch.nn.Module):
 
     def forward(self,input):
         x = self.pool_and_inject(input)
-        left_side = F.relu(self.left_conv2(F.relu(self.left_conv1(x))))
-        right_side = F.relu(self.right_conv2(F.relu(self.right_conv1(x))))
+        left_side = F.leaky_relu_(self.left_conv2(F.leaky_relu_(self.left_conv1(x))))
+        right_side = F.leaky_relu_(self.right_conv2(F.leaky_relu_(self.right_conv1(x))))
         x = torch.cat((left_side,right_side),1)
-        x = F.relu(self.conv3(x))
+        x = F.leaky_relu_(self.conv3(x))
         return x + input
 
 
 
 class EnvModel(nn.Module):
-    def __init__(self, in_shape, num_pixels, num_rewards):
+    def __init__(self, in_shape, num_pixels, num_rewardsi=5):
         super(EnvModel, self).__init__()
         
         width  = in_shape[1]
