@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class BasicBlock(nn.Module):
     def __init__(self, in_shape, n1, n2, n3):
-        super(BasicBlock, self).__init__()
+        super().__init__()
         
         self.in_shape = in_shape
         self.n1 = n1
@@ -83,8 +83,8 @@ class BasicBlock2(torch.nn.Module):
 
 
 class EnvModel(nn.Module):
-    def __init__(self, in_shape, num_pixels, num_rewardsi=5):
-        super(EnvModel, self).__init__()
+    def __init__(self, in_shape, num_pixels, num_rewards=5):
+        super().__init__()
         
         width  = in_shape[1]
         height = in_shape[2]
