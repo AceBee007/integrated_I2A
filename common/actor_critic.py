@@ -77,6 +77,9 @@ class RolloutStorage(object):
         self.masks   = torch.ones(num_steps  + 1, num_envs, 1)
         self.actions = torch.zeros(num_steps,     num_envs, 1).long()
         self.use_cuda = False
+
+    def __len__(self):
+        return len(self.rewards)
             
     def cuda(self):
         self.use_cuda  = True
