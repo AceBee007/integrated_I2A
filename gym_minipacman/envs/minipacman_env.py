@@ -474,7 +474,7 @@ class MiniPacman(gym.Env):
       return {0:'NOOP',1:'RIGHT',2:'UP',3:'LEFT',4:'DOWN'}
 
   def seed(self, seed=123):
-      self.np_random, self.seed = seeding.np_random(seed)
+      self.np_random, seed = seeding.np_random(seed)
 
 
 class ALE():
