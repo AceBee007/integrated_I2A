@@ -6,8 +6,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.autograd as autograd
 
-from actor_critic import OnPolicy, RolloutStorage
-from i2a import RolloutEncoder, ImaginationCore
+from .actor_critic import OnPolicy, RolloutStorage
 
 USE_CUDA = torch.cuda.is_available()
 if USE_CUDA:
@@ -18,7 +17,7 @@ else:
     LongTensor = torch.LongTensor
 
 class integrated_I2A(OnPolicy):
-    def __init__(self, in_shape, num_actions, num_rewards, mode='regular', env_model, env_storage_capa=100, num_envs=16, reset_env_model=False, rollout_depth=3, rollout_breadth=3, rollout_method='MonteCarlo'):
+    def __init__(self, in_shape, num_actions, num_rewards, env_model,  mode='regular', env_storage_capa=100, num_envs=16, reset_env_model=False, rollout_depth=3, rollout_breadth=3, rollout_method='MonteCarlo'):
         # have method: act
         # delete hidden_size, hidden_sizeはGRU(LSTM)用のパラメータなので不要？
         # rollout_method: 'MonteCarlo':モンテカルロ法、全部は自分のmodelfreeのポリシーで決定する
