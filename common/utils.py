@@ -10,6 +10,16 @@ import argparse
 from torch.utils.tensorboard import SummaryWriter
 import hashlib
 
+import torch
+
+USE_CUDA = torch.cuda.is_available()
+if USE_CUDA:
+    FloatTensor = torch.cuda.FloatTensor
+    LongTensor = torch.cuda.LongTensor
+else:
+    FloatTensor = torch.FloatTensor
+    LongTensor = torch.LongTensor 
+
 parser = argparse.ArgumentParser(description='model training log')
 
 parser.add_argument('--num_envs', type=int, default=16)
@@ -59,7 +69,6 @@ def params_logger():
     return logger
 
 
-USE_CUDA = torch.cuda.is_available()
 #Variable = lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda() if USE_CUDA else autograd.Variable(*args, **kwargs)
 def Variable(x, volatile=False):
     if volatile:
