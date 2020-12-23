@@ -11,9 +11,9 @@ import gym_minipacman
 
 from tqdm import tqdm # for progress bar
 
+from common.actor_critic import  OnPolicy, ActorCritic, RolloutStorage
 from common.utils import *
 
-from common.actor_critic import  OnPolicy, ActorCritic, RolloutStorage
 
 
 if __name__ == '__main__':
