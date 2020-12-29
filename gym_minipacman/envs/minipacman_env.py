@@ -182,6 +182,13 @@ class MiniPacman(gym.Env):
                                     dtype=np.float32)
         self.frame = 0
         self.reward = 0.
+        self.reward_array = np.array([0.0, 0.0, 0.0, 0.0, 0.0]) # MiniPacmanでは必ず5個になる、それぞれstep, food, power_pill, ghost_hunt, ghost_deathの報酬
+        self.mode_reward = np.array([
+            self.step_reward,
+            self.food_reward,
+            self.big_pill_reward,
+            self.ghost_hunt_reward,
+            self.ghost_death_reward])
         self.pcontinue = 1.
         self._init_level(1)
         self._make_image()
@@ -267,6 +274,7 @@ class MiniPacman(gym.Env):
 
     def _get_food(self, posx, posy):
         self.reward += self.food_reward
+        self.reward_array[1] = 1.0 # foodは1番
         self.world_state['food'][posx][posy] = 0
         self.nfood -= 1
         if self.nfood == 0 and self.all_food_terminate:
@@ -275,6 +283,7 @@ class MiniPacman(gym.Env):
     def _get_pill(self, pill_index):
         self.world_state['pills'].pop(pill_index)
         self.reward += self.big_pill_reward
+        self.reward_array[2] = 1.0 # big_pill は 2番
         self.world_state['power'] = self.pill_duration
         if (not self.world_state['pills']) and self.all_pill_terminate:
             self._init_level(self.level + 1)
@@ -282,11 +291,13 @@ class MiniPacman(gym.Env):
     def _kill_ghost(self, ghost_index):
         self.world_state['ghosts'].pop(ghost_index)
         self.reward += self.ghost_hunt_reward
+        self.reward_array[3] = 1.0 # ゴーストを食べた報酬は3番
         if (not self.world_state['ghosts']) and self.all_ghosts_terminate:
             self._init_level(self.level + 1)
 
     def _die_by_ghost(self):
         self.reward += self.ghost_death_reward
+        self.reward_array[4] = 1.0 # ゴーストに殺された報酬は4番
         self.pcontinue = 0
         self.ale.nr_lives = 0
 
@@ -387,10 +398,11 @@ class MiniPacman(gym.Env):
         self.frame = 0
         self._init_level(1)
         self.reward = 0
+        self.reward_array = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         self.pcontinue = 1
         self.ale.nr_lives = 1
         self.ghost_speed = self.ghost_speed_init
-        return self._make_image(), self.reward, self.pcontinue
+        return self._make_image(), self.reward_array, self.pcontinue
 
     def step(self, action):
         """Advances environment one time-step following the given action."""
@@ -398,6 +410,8 @@ class MiniPacman(gym.Env):
         pillman = self.world_state['pillman']
         self.pcontinue = self.discount
         self.reward = self.step_reward
+        if action != 0:
+            self.reward_array[0] = 1.0 # actionが0じゃないときに、step_rewardを入れる、actionが0の時、動かないので、報酬なし
         self.timer += 1
         # Update world state
         self.world_state['power'] = max(0, self.world_state['power']-1)
@@ -447,7 +461,7 @@ class MiniPacman(gym.Env):
         #state,reward, done, info
         info = {'Agent_ID': agent_id}
         ret = (self.color_image.transpose(2, 0, 1),
-               self.reward,
+               self.reward_array,
                not self.pcontinue, info)
         return ret
 
