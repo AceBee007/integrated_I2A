@@ -492,7 +492,9 @@ class MiniPacman(gym.Env):
 
     def seed(self, seed=123):
         self.np_random, seed = seeding.np_random(seed)
-
+    
+    def prosses_reward(self, reward):
+        return (self.env.mode_reward*reward).sum(axis=1)
 
 class ALE():
     def __init__(self, nr_lives=1):
