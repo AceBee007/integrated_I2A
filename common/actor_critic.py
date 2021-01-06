@@ -93,6 +93,9 @@ class RolloutStorage(object):
         self.actions[step].copy_(action)
         self.rewards[step].copy_(reward)
         self.masks[step + 1].copy_(mask)
+
+    def reset_first(self, state):
+        self.states[0].copy_(state)
         
     def after_update(self):
         self.states[0].copy_(self.states[-1])
