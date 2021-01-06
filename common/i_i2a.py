@@ -63,6 +63,7 @@ class Integrated_I2A(OnPolicy):
         
         # # used in method 2
         self.env_losses = np.array([0.0 for i in range(self.env_storage_capa)])
+        self.current_env_loss = 0
         self.current_frame = 0
 
         self.env_reward_coef = 0.1
@@ -71,33 +72,33 @@ class Integrated_I2A(OnPolicy):
         self.env_optimizer = optim.Adam(self.env_model.parameters())
         
         
-        self.features = nn.Sequential(
+        # self.features = nn.Sequential(
+        #     nn.Conv2d(in_shape[0], 16, kernel_size=3, stride=1),
+        #     nn.ReLU(),
+        #     nn.Conv2d(16, 16, kernel_size=3, stride=2),
+        #     nn.ReLU(),
+        # )
+        # self.fc = nn.Sequential(
+        #     nn.Linear(self.feature_size(), 256),
+        #     nn.ReLU(),
+        # )
+        # 
+        # self.critic  = nn.Linear(256, 1)
+        # self.actor   = nn.Linear(256, num_actions)
+        
+        self.features = torch.jit.script(nn.Sequential(
             nn.Conv2d(in_shape[0], 16, kernel_size=3, stride=1),
             nn.ReLU(),
             nn.Conv2d(16, 16, kernel_size=3, stride=2),
             nn.ReLU(),
-        )
-        self.fc = nn.Sequential(
+        ))
+        self.fc = torch.jit.script(nn.Sequential(
             nn.Linear(self.feature_size(), 256),
             nn.ReLU(),
-        )
-        
-        self.critic  = nn.Linear(256, 1)
-        self.actor   = nn.Linear(256, num_actions)
-        
-#         self.features = torch.jit.script(nn.Sequential(
-#             nn.Conv2d(in_shape[0], 16, kernel_size=3, stride=1),
-#             nn.ReLU(),
-#             nn.Conv2d(16, 16, kernel_size=3, stride=2),
-#             nn.ReLU(),
-#         ))
-#         self.fc = torch.jit.script(nn.Sequential(
-#             nn.Linear(self.feature_size(), 256),
-#             nn.ReLU(),
-#         ))
-        
-#         self.critic  = torch.jit.script(nn.Linear(256, 1))
-#         self.actor   = torch.jit.script(nn.Linear(256, num_actions))
+        ))
+      
+        self.critic  = torch.jit.script(nn.Linear(256, 1))
+        self.actor   = torch.jit.script(nn.Linear(256, num_actions))
     
     def forward(self, state):
         state = self.features(state)
@@ -182,7 +183,7 @@ class Integrated_I2A(OnPolicy):
                 inputs = self.env_model.get_inputs(state, action)
                 imagined_state, raw_imagined_reward = self.env_model.get_imagined(inputs)
                 imagined_state = imagined_state.transpose(2,0,1)
-                imagined_reward = self.env_model.process_reward(raw_imagined_reward, self.mode_reward)
+                imagined_reward = process_reward(raw_imagined_reward, self.mode_reward)
             good_reward, good_action = self.imagine(imagined_state, route+str(action), depth=depth+1)
             rewards = np.append(rewards, imagined_reward+good_reward.sum())
         self.planning_memo[route]=(rewards, actions)
@@ -210,6 +211,7 @@ class Integrated_I2A(OnPolicy):
             image_loss  = self.tmp_criterion(tmp_imagined_state.detach().clone(), tmp_target_state.detach().clone())
             reward_loss = self.tmp_criterion(tmp_imagined_reward.detach().clone(), tmp_target_reward.detach().clone())
             tmp_loss = (image_loss + self.env_reward_coef * reward_loss).data.cpu().numpy()
+        self.current_env_loss = tmp_loss
         env_loss_threashold = self.env_losses.mean()
         if tmp_loss > env_loss_threashold:
             self.env_storage.insert(self.current_storage_len, state, action, next_state, reward)
