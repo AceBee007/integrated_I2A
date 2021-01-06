@@ -142,7 +142,7 @@ if __name__ == '__main__':
                     }, i_update)
             writer.add_scalars('env_loss', {
                 'env_loss_SMA':i_i2a.env_losses.mean(),
-                'env_loss':i_i2a.current_env_loss:
+                'env_loss':i_i2a.current_env_loss
                 }, i_update)
             if i_update % 200 == 0:
                 write_histograms(i_i2a, writer, i_update)
