@@ -91,7 +91,7 @@ if __name__ == '__main__':
             next_state, raw_reward, done, _ = envs.step(action.squeeze(1).cpu().data.numpy()) # got numpy value
             next_state = FloatTensor(next_state)
             i_i2a.store_trajectory(state, action, next_state, FloatTensor(raw_reward))
-            reward = prosses_reward(raw_reward)
+            reward = process_reward(raw_reward, MODE_REWARDS[mode])
 
             reward = FloatTensor(reward).unsqueeze(1)
             episode_rewards += reward
