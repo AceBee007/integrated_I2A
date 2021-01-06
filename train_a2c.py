@@ -23,8 +23,9 @@ if __name__ == '__main__':
     paramlogger.log(20, now_time()+' '+hash_arg(arg))
     print(arg)
     print('UES_CUDA = ', USE_CUDA)
-    LABEL = 'test_a2c'
+    LABEL = 'a2c'
     num_envs = arg.num_envs
+    mode = arg.mode
     env_id = '{}MiniPacmanNoFrameskip-v0'.format(arg.mode.capitalize())
     global_seed = arg.global_seed
     # a2c hyperparams:
@@ -68,7 +69,8 @@ if __name__ == '__main__':
             action = actor_critic.act(state.cuda())
 
             next_state, reward, done, _ = envs.step(action.squeeze(1).cpu().data.numpy())
-
+            
+            reward = process_reward(reward, MODE_REWARDS[mode])
             reward = torch.FloatTensor(reward).unsqueeze(1)
             episode_rewards += reward
             masks = torch.FloatTensor(1-np.array(done)).unsqueeze(1)
