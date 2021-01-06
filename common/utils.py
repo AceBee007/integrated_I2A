@@ -45,6 +45,8 @@ parser.add_argument('--rollout_depth', type=int, default=3)
 parser.add_argument('--rollout_breadth', type=int, default=3)
 parser.add_argument('--rollout_method', type=str, default='MonteCarlo')# 'MonteCarlo', 'random', 'deterministic'
 parser.add_argument('--global_seed', type=int, default=123)
+parser.add_argument('--log_interval', type=int, default=5)
+parser.add_argument('--save_model_interval', type=int, default=5000)
 
 def get_my_logger(label, args):
     logger = getLogger('training log')
