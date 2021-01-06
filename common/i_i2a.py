@@ -8,7 +8,7 @@ import torch.autograd as autograd
 
 from .actor_critic import OnPolicy, RolloutStorage
 from .environment_model import EnvModelRolloutStorage
-from .utils import process_reward
+from .utils import process_reward, np_softmax, np_deque_append
 
 USE_CUDA = torch.cuda.is_available()
 if USE_CUDA:
