@@ -1,16 +1,18 @@
+from logging import getLogger, FileHandler, Formatter
+import datetime
+import argparse
+import hashlib
+
 import gym
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.utils import set_random_seed
+
 import numpy as np
-from logging import getLogger, FileHandler, Formatter
-import datetime
-import torch
-import argparse
-from torch.utils.tensorboard import SummaryWriter
-import hashlib
+from numba import jit
 
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
 USE_CUDA = torch.cuda.is_available()
 if USE_CUDA:
@@ -20,16 +22,28 @@ else:
     FloatTensor = torch.FloatTensor
     LongTensor = torch.LongTensor 
 
+MODE_REWARDS = {# step, food, big_pill, eat_ghost, death_ghost
+    "regular": np.array([0.0,    1.,  2.,  5.,  0.]),
+    "avoid":   np.array([0.1,  -0.1,  -5, -10, -20]),
+    "hunt":    np.array([  0,     0,   1,  10, -20]),
+    "ambush":  np.array([  0,  -0.1,   0,  10, -20]),
+    "rush":    np.array([  0,  -0.1, -10,   0,   0])
+}
+
 parser = argparse.ArgumentParser(description='model training log')
 
 parser.add_argument('--num_envs', type=int, default=16)
-parser.add_argument('--num_steps', type=int, default=5)# 5 for rollout times
-parser.add_argument('--num_frames', type=int, default=1000000)# 10e5 , 100万
+parser.add_argument('--num_steps', type=int, default=5)# 5 steps for one_batch
+parser.add_argument('--num_frames', type=int, default=125000)# 125000 updates(batchs), step = update*num_env*num_step
 parser.add_argument('--num_ics', type=int, default=1)# default:1 for imagination core
-parser.add_argument('--mode', type=str, default="RegularMiniPacmanNoFrameskip-v0")
+parser.add_argument('--mode', type=str, default="regular")
 parser.add_argument('--learning_rate', type=float, default=7e-4)
 parser.add_argument('--free_model', type=str, default='dummy')
 parser.add_argument('--env_model', type=str, default='dummy')
+parser.add_argument('--env_pixel_model', type=int, default=8)# 8はonehot,3はrgb
+parser.add_argument('--rollout_depth', type=int, default=3)
+parser.add_argument('--rollout_breadth', type=int, default=3)
+parser.add_argument('--rollout_method', type=str, default='MonteCarlo')# 'MonteCarlo', 'random', 'deterministic'
 parser.add_argument('--global_seed', type=int, default=123)
 
 def get_my_logger(label, args):
@@ -113,3 +127,28 @@ def make_env(env_id, rank, seed=0):
         env.seed(seed + rank)
         return env
     return _init
+
+def process_reward(reward, mode_reward):
+    if type(reward) ==torch.Tensor:
+        return (reward.data.cpu().numpy()*mode_reward).sum(axis=1)
+    else:
+        return (reward*mode_reward).sum(axis=1)
+
+@jit
+def np_softmax(a):
+    'numpyバージョンのsoftmax関数、若干早い'
+    # 一番大きい値を取得
+    c = np.max(a)
+    # 各要素から一番大きな値を引く（オーバーフロー対策）
+    exp_a = np.exp(a - c)
+    sum_exp_a = np.sum(exp_a)
+    # 要素の値/全体の要素の合計
+    y = exp_a / sum_exp_a
+    return y
+
+@jit(forceobj=True)
+def np_deque_append(array:np.ndarray, num:float):
+    'numpyのdeque,最前の要素を捨てて、最後に一個の要素追加'
+    array[0:-1] = array[1:]
+    array[-1] = num
+    return array
