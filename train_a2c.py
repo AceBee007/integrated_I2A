@@ -25,7 +25,7 @@ if __name__ == '__main__':
     print('UES_CUDA = ', USE_CUDA)
     LABEL = 'test_a2c'
     num_envs = arg.num_envs
-    env_id = arg.mode
+    env_id = '{}MiniPacmanNoFrameskip-v0'.format(arg.mode.capitalize())
     global_seed = arg.global_seed
     # a2c hyperparams:
     gamma = 0.99                     # 割引率
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         nn.utils.clip_grad_norm_(actor_critic.parameters(), max_grad_norm)
         optimizer.step()
         
-        if i_update % 20 == 0:
+        if i_update % arg.log_interval == 0:
             writer.add_scalars('final_rewards', {
                 'max':max(final_rewards),
                 'min':min(final_rewards),
@@ -117,9 +117,9 @@ if __name__ == '__main__':
                 'action_loss':action_loss,
                 'loss':float(loss.item())
                     }, i_update)
-            if i_update % 100 == 0:
+            if i_update % arg.save_model_interval == 0:
                 write_histograms(actor_critic, writer, i_update)
-                if i_update % 50000 == 0:
+                if i_update % 1000 == 0:
                     save_model(actor_critic, '{}_{}'.format(LABEL, i_update), arg)
             
             #clear_output(True)
