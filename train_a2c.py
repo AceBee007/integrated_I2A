@@ -119,7 +119,7 @@ if __name__ == '__main__':
                 'action_loss':action_loss,
                 'loss':float(loss.item())
                     }, i_update)
-            if i_update % arg.save_model_interval == 0:
+            if i_update != 0 and i_update % arg.save_model_interval == 0:
                 write_histograms(actor_critic, writer, i_update)
                 if i_update % 1000 == 0:
                     save_model(actor_critic, '{}_{}'.format(LABEL, i_update), arg)
