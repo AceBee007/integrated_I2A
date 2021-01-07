@@ -406,6 +406,7 @@ class MiniPacman(gym.Env):
 
     def step(self, action):
         """Advances environment one time-step following the given action."""
+        self.reward_array = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         self.frame += 1
         pillman = self.world_state['pillman']
         self.pcontinue = self.discount
