@@ -23,7 +23,7 @@ if __name__ == '__main__':
     paramlogger.log(20, now_time()+' '+hash_arg(arg))
     print(arg)
     print('UES_CUDA = ', USE_CUDA)
-    LABEL = 'a2c'
+    LABEL = 'a2c_{}_{}'.format(arg.mode, arg.global_seed)
     num_envs = arg.num_envs
     mode = arg.mode
     env_id = '{}MiniPacmanNoFrameskip-v0'.format(arg.mode.capitalize())
