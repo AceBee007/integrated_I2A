@@ -6,6 +6,15 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.autograd as autograd
 
+USE_CUDA = torch.cuda.is_available()
+DEVICE = 'cuda:0'
+if USE_CUDA:
+    FloatTensor = lambda x:torch.cuda.FloatTensor(x, device=DEVICE)
+    LongTensor = lambda x:torch.cuda.LongTensor(x, device=DEVICE)
+else:
+    FloatTensor = torch.FloatTensor
+    LongTensor = torch.LongTensor 
+
 # <p>The Rollout Encoder is an GRU with convolutional encoder which sequentially processes
 # a trajectory</p>
 
@@ -127,7 +136,7 @@ class ImaginationCore(object):
 
         if self.full_rollout:
             state = state.unsqueeze(0).repeat(self.num_actions, 1, 1, 1, 1).view(-1, *self.in_shape)
-            action = torch.LongTensor([[i] for i in range(self.num_actions)]*batch_size)
+            action = LongTensor([[i] for i in range(self.num_actions)]*batch_size)
             action = action.view(-1)
             rollout_batch_size = batch_size * self.num_actions
         else:
@@ -148,7 +157,7 @@ class ImaginationCore(object):
             imagined_reward = F.softmax(imagined_reward, dim=1).max(1)[1].data.cpu()
 
             imagined_state = target_to_pix(imagined_state.numpy())
-            imagined_state = torch.FloatTensor(imagined_state).view(rollout_batch_size, *self.in_shape)
+            imagined_state = FloatTensor(imagined_state).view(rollout_batch_size, *self.in_shape)
 
             onehot_reward = torch.zeros(rollout_batch_size, self.num_rewards)
             onehot_reward[range(rollout_batch_size), imagined_reward] = 1
@@ -169,8 +178,4 @@ class ImaginationCore(object):
 # if full_rollout == True: perform rollout for each possible action in the environment. <br>
 # if full_rollout == False: perform rollout for one action from distil policy.
 # </p>
-
-# In[12]:
-
-rollout = True
 
