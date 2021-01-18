@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.autograd as autograd
+from .actor_critic import OnPolicy
 
 USE_CUDA = torch.cuda.is_available()
 DEVICE = 'cuda:0'
