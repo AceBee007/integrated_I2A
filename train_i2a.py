@@ -116,20 +116,7 @@ if __name__ == '__main__':
             loss.backward()
             nn.utils.clip_grad_norm_(actor_critic.parameters(), max_grad_norm)
             optimizer.step()
-            
-                
-                #clear_output(True)
-                #plt.figure(figsize=(20,5))
-                #plt.subplot(131)
-                #plt.title('epoch %s. reward: %s' % (i_update, np.mean(all_rewards[-10:])))
-                #plt.plot(all_rewards)
-                #plt.subplot(132)
-                #plt.title('loss %s' % all_losses[-1])
-                #plt.plot(all_losses)
-                #plt.show()
-                
             rollout.after_update
-        writer.close()
         torch.save(actor_critic.state_dict(), a2c_model_path)
     print('Finished training A2C')
     
@@ -143,12 +130,25 @@ if __name__ == '__main__':
         action = action.data.cpu().squeeze(1).numpy()
         return action
 
+    def play_games(envs, frames):
+        states = envs.reset()
+        
+        for frame_idx in tqdm(range(frames)):
+            actions = get_action(states)
+            next_states, rewards, dones, _ = envs.step(actions)
+            
+            yield frame_idx, states, actions, rewards, next_states, dones
+            
+            states = next_states
+
     env_model = EnvModel(envs.observation_space.shape, num_pixels=arg.env_pixel_model, num_envs=arg.num_envs)
+    env_model.cuda()
     env_model_path = './trained_models/env_model_a2c_{}'.format(arg.global_seed)
     if os.path.exists(env_model_path):
         print('Load Env Model')
         env_model.load_state_dict(torch.load(env_model_path))
     else:
+        print('Start training env_model')
         reward_coef = 0.1
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(env_model.parameters())
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         state = envs.reset()
         state = FloatTensor(state)
 
-        for frame_idx, states, actions, rewards, next_states, dones in tqdm(play_games(envs, arg.num_frames)):
+        for frame_idx, states, actions, rewards, next_states, dones in play_games(envs, arg.num_frames):
             states      = FloatTensor(states)
             actions     = LongTensor(actions)
 
@@ -165,13 +165,13 @@ if __name__ == '__main__':
 
             imagined_state, imagined_reward = env_model(inputs)
 
-            target_state = env_model.state_to_target(next_states)
+            target_state = LongTensor(pix_to_target(next_states))
             
-            target_reward = env_model.process_reward(rewards, MODE_REWARDS[arg.mode])
+            target_reward = FloatTensor(rewards)
 
             optimizer.zero_grad()
             image_loss  = criterion(imagined_state, target_state)
-            reward_loss = criterion(imagined_reward, target_reward)
+            reward_loss = nn.functional.mse_loss(imagined_reward, target_reward)
             loss = image_loss + reward_coef * reward_loss
             loss.backward()
             optimizer.step()
@@ -186,13 +186,15 @@ if __name__ == '__main__':
 
     distill_policy = actor_critic
     distill_optimizer = optim.Adam(distill_policy.parameters())
+    imagination = ImaginationCore(1, state_shape, num_actions, num_rewards, env_model, distill_policy, full_rollout=True)
 
 
-    i2a = I2A(state_dict, num_actions, num_rewards,  256, imagination, full_rollout=True)
+    i2a = I2A(state_shape, num_actions, num_rewards,  256, imagination, full_rollout=True)
     optimizer = optim.RMSprop(i2a.parameters(), lr, eps=eps, alpha=alpha)
      
     rollout = RolloutStorage(num_steps, num_envs, envs.observation_space.shape)
     if USE_CUDA:
+        i2a.cuda()
         rollout.cuda()
 
     state = envs.reset()
@@ -202,6 +204,9 @@ if __name__ == '__main__':
 
     episode_rewards = torch.zeros(num_envs, 1)
     final_rewards   = torch.zeros(num_envs, 1)
+    if USE_CUDA:
+        episode_rewards = episode_rewards.cuda()
+        final_rewards = final_rewards.cuda()
 
     print('Start training I2A')
     for i_update in tqdm(range(num_frames)):
@@ -209,9 +214,10 @@ if __name__ == '__main__':
         for step in range(num_steps):
             if USE_CUDA:
                 current_state = current_state.cuda()
-            action = actor_critic.act(current_state)
+            action = i2a.act(current_state)
 
-            next_state, reward, done, _ = envs.step(action.squeeze(1).cpu().data.numpy())
+            next_state, raw_reward, done, _ = envs.step(action.squeeze(1).cpu().data.numpy())
+            reward = process_reward(raw_reward, MODE_REWARDS[mode])
 
             reward = FloatTensor(reward).unsqueeze(1)
             episode_rewards += reward
@@ -234,16 +240,16 @@ if __name__ == '__main__':
         returns = rollout.compute_returns(next_value, gamma)
 
         logit, action_log_probs, values, entropy = actor_critic.evaluate_actions(
-            rollout.states[:-1]).view(-1, *state_shape,
+            rollout.states[:-1].view(-1, *state_shape),
             rollout.actions.view(-1, 1)
         )
         
-        distil_logit, _, _, _ = distil_policy.evaluate_actions(
+        distil_logit, _, _, _ = distill_policy.evaluate_actions(
             rollout.states[:-1].view(-1, *state_shape),
             rollout.actions.view(-1, 1)
         )
             
-        distil_loss = 0.01 * (F.softmax(logit).detach() * F.log_softmax(distil_logit)).sum(1).mean()
+        distil_loss = 0.01 * (F.softmax(logit, dim=1).detach() * F.log_softmax(distil_logit, dim=1)).sum(1).mean()
 
         values = values.view(num_steps, num_envs, 1)
         action_log_probs = action_log_probs.view(num_steps, num_envs, 1)
@@ -255,7 +261,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
         loss = value_loss * value_loss_coef + action_loss - entropy * entropy_coef
         loss.backward()
-        nn.utils.clip_grad_norm(actor_critic.parameters(), max_grad_norm)
+        nn.utils.clip_grad_norm_(actor_critic.parameters(), max_grad_norm)
         optimizer.step()
         
         distill_optimizer.zero_grad()
@@ -279,7 +285,8 @@ if __name__ == '__main__':
                     save_model(i2a, '{}_{}'.format(LABEL, i_update), arg)
             
         rollout.after_update()
-
+    save_model(i2a, '{}_{}'.format(LABEL, i_update), arg)
+    writer.close()
 
 
 
