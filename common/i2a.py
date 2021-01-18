@@ -6,6 +6,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.autograd as autograd
 from .actor_critic import OnPolicy
+from .utils import target_to_pix
 
 USE_CUDA = torch.cuda.is_available()
 DEVICE = 'cuda:0'
@@ -148,6 +149,9 @@ class ImaginationCore(object):
 
         for step in range(self.num_rollouts):
             onehot_action = torch.zeros(rollout_batch_size, self.num_actions, *self.in_shape[1:])
+            if USE_CUDA:
+                onehot_action = onehot_action.cuda()
+                state = state.cuda()
             onehot_action[range(rollout_batch_size), action] = 1
             inputs = torch.cat([state, onehot_action], 1)
 
@@ -162,6 +166,8 @@ class ImaginationCore(object):
 
             onehot_reward = torch.zeros(rollout_batch_size, self.num_rewards)
             onehot_reward[range(rollout_batch_size), imagined_reward] = 1
+            if USE_CUDA:
+                onehot_reward = onehot_reward.cuda()
 
             rollout_states.append(imagined_state.unsqueeze(0))
             rollout_rewards.append(onehot_reward.unsqueeze(0))
