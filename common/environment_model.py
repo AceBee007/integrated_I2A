@@ -250,7 +250,7 @@ class EnvModel(nn.Module):
         # old_onehotの時、cate=7になる
         if type(states) ==torch.Tensor:
             want = (states.transpose(1,2).transpose(2,3).reshape(-1,3)*self.tensor_bin_factor).sum(dim=1).long()
-            res = torch.eye(8)[want]
+            res = torch.eye(cate)[want]
             if USE_CUDA:
                 res = res.cuda()
             return res
