@@ -133,6 +133,16 @@ if __name__ == '__main__':
         torch.save(actor_critic.state_dict(), a2c_model_path)
     print('Finished training A2C')
     
+    def get_action(state):
+        if state.ndim == 4:
+            state = FloatTensor(np.float32(state))
+        else:
+            state = FloatTensor(np.float32(state)).unsqueeze(0)
+        with torch.no_grad():
+            action = actor_critic.act(state)
+        action = action.data.cpu().squeeze(1).numpy()
+        return action
+
     env_model = EnvModel(envs.observation_space.shape, num_pixels=arg.env_pixel_model, num_envs=arg.num_envs)
     env_model_path = './trained_models/env_model_a2c_{}'.format(arg.global_seed)
     if os.path.exists(env_model_path):
