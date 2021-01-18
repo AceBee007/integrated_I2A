@@ -186,7 +186,7 @@ if __name__ == '__main__':
 
     distill_policy = actor_critic
     distill_optimizer = optim.Adam(distill_policy.parameters())
-    imagination = ImaginationCore(1, state_shape, num_actions, num_rewards, env_model, distill_policy, full_rollout=True)
+    imagination = ImaginationCore(arg.rollout_depth, state_shape, num_actions, num_rewards, env_model, distill_policy, full_rollout=True)
 
 
     i2a = I2A(state_shape, num_actions, num_rewards,  256, imagination, full_rollout=True)
