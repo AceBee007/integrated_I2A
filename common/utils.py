@@ -30,6 +30,17 @@ MODE_REWARDS = {# step, food, big_pill, eat_ghost, death_ghost
     "ambush":  np.array([  0,  -0.1,   0,  10, -20]),
     "rush":    np.array([  0,  -0.1, -10,   0,   0])
 }
+pixels = (
+    (0.0, 1.0, 0.0), 
+    (0.0, 1.0, 1.0),
+    (0.0, 0.0, 1.0),
+    (1.0, 1.0, 1.0),
+    (1.0, 1.0, 0.0), 
+    (0.0, 0.0, 0.0),
+    (1.0, 0.0, 0.0)
+)
+def target_to_pix(imagined_states):
+    return [list(pixels[target]) for target in imagined_states]
 
 parser = argparse.ArgumentParser(description='model training log')
 
@@ -136,6 +147,17 @@ def process_reward(reward, mode_reward):
         return (reward.data.cpu().numpy()*mode_reward).sum(axis=1)
     else:
         return (reward*mode_reward).sum(axis=1)
+
+def play_games(envs, frames):
+    states = envs.reset()
+    
+    for frame_idx in range(frames):
+        actions = get_action(states)
+        next_states, rewards, dones, _ = envs.step(actions)
+        
+        yield frame_idx, states, actions, rewards, next_states, dones
+        
+        states = next_states
 
 @jit
 def np_softmax(a):
