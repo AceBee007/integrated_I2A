@@ -30,18 +30,6 @@ MODE_REWARDS = {# step, food, big_pill, eat_ghost, death_ghost
     "ambush":  np.array([  0,  -0.1,   0,  10, -20]),
     "rush":    np.array([  0,  -0.1, -10,   0,   0])
 }
-pixels = (
-    (0.0, 1.0, 0.0), 
-    (0.0, 1.0, 1.0),
-    (0.0, 0.0, 1.0),
-    (1.0, 1.0, 1.0),
-    (1.0, 1.0, 0.0), 
-    (0.0, 0.0, 0.0),
-    (1.0, 0.0, 0.0)
-)
-def target_to_pix(imagined_states):
-    return [list(pixels[target]) for target in imagined_states]
-
 parser = argparse.ArgumentParser(description='model training log')
 
 parser.add_argument('--num_envs', type=int, default=16)
@@ -59,6 +47,21 @@ parser.add_argument('--rollout_method', type=str, default='MonteCarlo')# 'MonteC
 parser.add_argument('--global_seed', type=int, default=123)
 parser.add_argument('--log_interval', type=int, default=10)
 parser.add_argument('--save_model_interval', type=int, default=5000)
+
+pixels = (
+    (0.0, 1.0, 0.0), 
+    (0.0, 1.0, 1.0),
+    (0.0, 0.0, 1.0),
+    (1.0, 1.0, 1.0),
+    (1.0, 1.0, 0.0), 
+    (0.0, 0.0, 0.0),
+    (1.0, 0.0, 0.0)
+)
+def target_to_pix(imagined_states):
+    return [list(pixels[target]) for target in imagined_states]
+pixel_to_onehot = {pix:i for i, pix in enumerate(pixels)} # {(0.0, 1.0, 0.0):0,    }
+def pix_to_target(next_states):
+    return [pixel_to_onehot[tuple([np.round(pixel[0]), np.round(pixel[1]), np.round(pixel[2])])] for pixel in next_states.transpose(0, 2, 3, 1).reshape(-1, 3)]
 
 def get_my_logger(label, args):
     logger = getLogger('training log')
