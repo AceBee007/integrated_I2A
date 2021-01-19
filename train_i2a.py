@@ -66,13 +66,13 @@ if __name__ == '__main__':
 
     writer = new_writer(LABEL, arg)
 
-    a2c_model_path =  './trained_models/tmp_a2c_{}'.format(arg.global_seed)
+    a2c_model_path =  './trained_models/tmp_a2c_{}_{}'.format(arg.mode, arg.global_seed)
     if os.path.exists(a2c_model_path):
         print('Load A2C model from ', a2c_model_path)
         actor_critic.load_state_dict(torch.load(a2c_model_path))
     else:
         print('Start training A2C model')
-        for i_update in tqdm(range(num_frames)):
+        for i_update in tqdm(range(arg.num_frames)):
 
             for step in range(num_steps):
                 action = actor_critic.act(state.cuda())
@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     env_model = EnvModel(envs.observation_space.shape, num_pixels=arg.env_pixel_model, num_envs=arg.num_envs)
     env_model.cuda()
-    env_model_path = './trained_models/env_model_a2c_{}'.format(arg.global_seed)
+    env_model_path = './trained_models/env_model_a2c_{}_{}'.format(arg.mode, arg.global_seed)
     if os.path.exists(env_model_path):
         print('Load Env Model')
         env_model.load_state_dict(torch.load(env_model_path))
