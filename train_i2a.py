@@ -195,6 +195,7 @@ if __name__ == '__main__':
      
     rollout = RolloutStorage(num_steps, num_envs, envs.observation_space.shape)
     if USE_CUDA:
+        distill_policy.cuda()
         i2a.cuda()
         rollout.cuda()
 
