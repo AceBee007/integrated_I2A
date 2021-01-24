@@ -184,8 +184,9 @@ if __name__ == '__main__':
     num_rewards = len(MODE_REWARDS[arg.mode])
 
 
-    distill_policy = actor_critic
+    distill_policy = ActorCritic(envs.observation_space.shape, envs.action_space.n)
     distill_optimizer = optim.Adam(distill_policy.parameters())
+    #                def __init__(self, num_rollouts, in_shape, num_actions, num_rewards, env_model, distill_policy, full_rollout=True):
     imagination = ImaginationCore(arg.rollout_depth, state_shape, num_actions, num_rewards, env_model, distill_policy, full_rollout=True)
 
 
@@ -239,7 +240,7 @@ if __name__ == '__main__':
 
         returns = rollout.compute_returns(next_value, gamma)
 
-        logit, action_log_probs, values, entropy = actor_critic.evaluate_actions(
+        logit, action_log_probs, values, entropy = i2a.evaluate_actions(
             rollout.states[:-1].view(-1, *state_shape),
             rollout.actions.view(-1, 1)
         )
@@ -261,7 +262,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
         loss = value_loss * value_loss_coef + action_loss - entropy * entropy_coef
         loss.backward()
-        nn.utils.clip_grad_norm_(actor_critic.parameters(), max_grad_norm)
+        nn.utils.clip_grad_norm_(i2a.parameters(), max_grad_norm)
         optimizer.step()
         
         distill_optimizer.zero_grad()
