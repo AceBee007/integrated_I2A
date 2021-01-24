@@ -75,13 +75,13 @@ class Integrated_I2A(OnPolicy):
         
         # self.features = nn.Sequential(
         #     nn.Conv2d(in_shape[0], 16, kernel_size=3, stride=1),
-        #     nn.ReLU(),
+        #     nn.LeakyReLU(),
         #     nn.Conv2d(16, 16, kernel_size=3, stride=2),
-        #     nn.ReLU(),
+        #     nn.LeakyReLU(),
         # )
         # self.fc = nn.Sequential(
         #     nn.Linear(self.feature_size(), 256),
-        #     nn.ReLU(),
+        #     nn.LeakyReLU(),
         # )
         # 
         # self.critic  = nn.Linear(256, 1)
@@ -89,13 +89,13 @@ class Integrated_I2A(OnPolicy):
         
         self.features = torch.jit.script(nn.Sequential(
             nn.Conv2d(in_shape[0], 16, kernel_size=3, stride=1),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(16, 16, kernel_size=3, stride=2),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         ))
         self.fc = torch.jit.script(nn.Sequential(
             nn.Linear(self.feature_size(), 256),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         ))
       
         self.critic  = torch.jit.script(nn.Linear(256, 1))
