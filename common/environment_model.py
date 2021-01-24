@@ -198,15 +198,26 @@ class EnvModel(nn.Module):
         Output: ndarray(15,19,3), ndarray(5,)
         get inputs to calculate imagined image and rewards
         '''
-        with torch.no_grad():
-            tensor_image, tensor_reward = self.forward(inputs)
-            np_reward = tensor_reward.data.cpu().numpy()
-            if self.mode == 'onehot':
-                np_image = np.array([self.bin_pixels[i] for i in torch.argmax(tensor_image, dim=1).data.cpu().numpy()]).reshape(15,19,3)
-            elif self.mode == 'old_onehot':
-                np_image = np.array([self.pixels[i] for i in torch.argmax(tensor_image, dim=1).data.cpu().numpy()]).reshape(15,19,3)
-            elif self.mode == 'rgb':
-                np_image = np.clip(tensor_image.reshape(15,19,3).data.cpu().numpy(), a_min=0.0, a_max=1.0)
+        if inputs.ndim==4:
+            with torch.no_grad():
+                tensor_image, tensor_reward = self.forward(inputs)
+                np_reward = tensor_reward.data.cpu().numpy()
+                if self.mode == 'onehot':
+                    np_image = np.array([self.bin_pixels[i] for i in torch.argmax(tensor_image, dim=1).data.cpu().numpy()]).reshape(-1,15,19,3)
+                elif self.mode == 'old_onehot':
+                    np_image = np.array([self.pixels[i] for i in torch.argmax(tensor_image, dim=1).data.cpu().numpy()]).reshape(-1,15,19,3)
+                elif self.mode == 'rgb':
+                    np_image = np.clip(tensor_image.reshape(-1,15,19,3).data.cpu().numpy(), a_min=0.0, a_max=1.0)
+        else:
+            with torch.no_grad():
+                tensor_image, tensor_reward = self.forward(inputs)
+                np_reward = tensor_reward.data.cpu().numpy()
+                if self.mode == 'onehot':
+                    np_image = np.array([self.bin_pixels[i] for i in torch.argmax(tensor_image, dim=1).data.cpu().numpy()]).reshape(15,19,3)
+                elif self.mode == 'old_onehot':
+                    np_image = np.array([self.pixels[i] for i in torch.argmax(tensor_image, dim=1).data.cpu().numpy()]).reshape(15,19,3)
+                elif self.mode == 'rgb':
+                    np_image = np.clip(tensor_image.reshape(15,19,3).data.cpu().numpy(), a_min=0.0, a_max=1.0)
         return np_image, np_reward
     
     def get_inputs(self, states, actions):
