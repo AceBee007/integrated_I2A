@@ -15,10 +15,13 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 USE_CUDA = torch.cuda.is_available()
-DEVICE = 'cuda:0'
+#DEVICE = 'cuda:0'
+#if USE_CUDA:
+#    FloatTensor = lambda x:torch.cuda.FloatTensor(x, device=DEVICE)
+#    LongTensor = lambda x:torch.cuda.LongTensor(x, device=DEVICE)
 if USE_CUDA:
-    FloatTensor = lambda x:torch.cuda.FloatTensor(x, device=DEVICE)
-    LongTensor = lambda x:torch.cuda.LongTensor(x, device=DEVICE)
+    FloatTensor = torch.cuda.FloatTensor
+    LongTensor = torch.cuda.LongTensor
 else:
     FloatTensor = torch.FloatTensor
     LongTensor = torch.LongTensor 
