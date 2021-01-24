@@ -9,10 +9,9 @@ from .actor_critic import OnPolicy
 from .utils import target_to_pix
 
 USE_CUDA = torch.cuda.is_available()
-DEVICE = 'cuda:0'
 if USE_CUDA:
-    FloatTensor = lambda x:torch.cuda.FloatTensor(x, device=DEVICE)
-    LongTensor = lambda x:torch.cuda.LongTensor(x, device=DEVICE)
+    FloatTensor = torch.cuda.FloatTensor
+    LongTensor = torch.cuda.LongTensor
 else:
     FloatTensor = torch.FloatTensor
     LongTensor = torch.LongTensor 
