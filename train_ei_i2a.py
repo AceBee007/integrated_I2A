@@ -165,6 +165,8 @@ if __name__ == '__main__':
                     save_model(ei_i2a, '{}_{}'.format(LABEL, i_update), arg)
             
         rollout.after_update()
+    save_model(ei_i2a.env_model, '{}_{}'.format(LABEL, 'env_final'), arg)
+    save_model(distill_policy, '{}_{}'.format(LABEL, 'distill_final'), arg)
     save_model(ei_i2a, '{}_{}'.format(LABEL, i_update), arg)
     writer.close()
 
